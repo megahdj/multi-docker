@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t megahdj/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true megahdj/react-test npm test
+
+after_success:
+  - docker build -t megahdj/multi-client ./client
+  - docker build -t megahdj/multi-nginx ./nginx
+  - docker build -t megahdj/multi-server ./server
+  - docker build -t megahdj/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push megahdj/multi-client
+  - docker push megahdj/multi-nginx
+  - docker push megahdj/multi-server
+  - docker push megahdj/multi-worker
